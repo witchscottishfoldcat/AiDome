@@ -1,28 +1,26 @@
-from typing import List, Union, Optional
-from pydantic import BaseSettings, AnyHttpUrl
+# config/settings.py
 
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import Literal
 
 class Settings(BaseSettings):
-    APP_NAME: str = "FastAPI App"
-    DEBUG: bool = False
-    LOG_LEVEL: str = "info"
-    API_V1_STR: str = "/api/v1"
-    
-    # Database
-    DATABASE_URL: str = "sqlite:///./sql_app.db"
-    DATABASE_ECHO: bool = False
-    
-    # Security
-    SECRET_KEY: str = "your-secret-key-change-in-production"
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    
-    # CORS
-    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
-    
-    class Config:
-        case_sensitive = True
-        env_file = ".env"
+    model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8', extra='ignore')
 
+    # --- LLM Provider Settings ---
+    LLM_PROVIDER: Literal['mock', 'openai', 'dashscope'] = 'mock'
+    
+    # --- OpenAI Specific Settings ---
+    OPENAI_API_KEY: str | None = None
+    OPENAI_MODEL: str = "gpt-3.5-turbo"
+
+    # --- Alibaba Cloud DashScope (Lingma) Settings ---
+    DASHSCOPE_API_KEY: str | None = None
+    DASHSCOPE_MODEL: str = "qwen-turbo" # 默认使用通义千问-turbo
 
 settings = Settings()
+
+# --- 启动时验证逻辑更新 ---
+if settings.LLM_PROVIDER == 'openai' and not settings.OPENAI_API_KEY:
+    raise ValueError("LLM_PROVIDER is set to 'openai', but OPENAI_API_KEY is not configured.")
+if settings.LLM_PROVIDER == 'dashscope' and not settings.DASHSCOPE_API_KEY:
+    raise ValueError("LLM_PROVIDER is 'dashscope', but DASHSCOPE_API_KEY is not configured.")

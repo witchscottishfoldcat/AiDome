@@ -10,7 +10,12 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "fastapi (>=0.121.1,<0.122.0)",
-    "uvicorn[standard] (>=0.38.0,<0.39.0)"
+    "uvicorn[standard] (>=0.38.0,<0.39.0)",
+    "python-dotenv (>=1.2.1,<2.0.0)",
+    "pydantic-settings (>=2.12.0,<3.0.0)",
+    "openai (>=2.8.0,<3.0.0)",
+    "alibabacloud-bailian20230601 (>=1.6.1,<2.0.0)",
+    "dashscope (>=1.25.1,<2.0.0)"
 ]
 
 
