@@ -71,3 +71,9 @@ func _process(delta):
 		print("Body Prototype: Connection CLOSED with code: %d, reason: %s" % [code, reason])
 		# 停止进一步处理，可以禁用此节点的process循环
 		set_process(false)
+func _input(event):
+	if event is InputEventKey and event.pressed:
+		var custom_message = "今天天气真好"
+		if _is_connected:
+			_peer.send_text(custom_message)
+			print("Body Prototype: Manually sent message: ", custom_message)

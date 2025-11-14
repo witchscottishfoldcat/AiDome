@@ -1,14 +1,17 @@
 # app/main.py
+
 import logging
 
 from fastapi import FastAPI
 
+from core.decision_maker import decision_maker
 from core.state_manager import state_manager
-from schemas.events import StateChangedEvent
-from schemas.state import PetState
+# --- 【核心变更】 ---
+# 导入我们的记忆服务
+from services.memory_service import memory_service
+from schemas.events import SendWebSocketMessageEvent
 from app.event_bus import event_bus
-# WebSocket相关的导入暂时保留，因为endpoint还需要
-from app.websocket_handler import setup_websocket_handler 
+from app.websocket_handler import handle_send_message_command, setup_websocket_handler
 
 logging.basicConfig(
     level=logging.INFO,
@@ -16,27 +19,24 @@ logging.basicConfig(
 )
 logger = logging.getLogger("ArkHeart.Brain.Main")
 
-# --- 【新】临时的状态变化日志记录器 ---
-async def log_state_changes(event: StateChangedEvent):
-    logger.info(
-        f"[State Logger] Pet state changed! New energy: {event.current_state.energy:.2f}. "
-        f"Reason: {event.reason}"
-    )
-
 app = FastAPI(title="ArkHeart Brain Service", version="0.1.0")
 
 @app.on_event("startup")
 async def startup_event():
     logger.info("Application starting up...")
-    await state_manager.setup_subscriptions()
     
+    # 激活核心模块
+    await state_manager.setup_subscriptions()
+    await decision_maker.setup_subscriptions()
     # --- 【核心变更】 ---
-    # 订阅我们新创建的 StateChangedEvent
-    await event_bus.subscribe(StateChangedEvent, log_state_changes)
-    logger.info("State change logger subscribed.")
+    # 激活记忆服务，让它开始订阅事件并记录记忆
+    await memory_service.setup_subscriptions()
+    
+    # 订阅指令事件
+    await event_bus.subscribe(SendWebSocketMessageEvent, handle_send_message_command)
+    logger.info("All modules initialized and subscribed.")
 
-# --- 【变更】将WebSocket逻辑移出 ---
-# 我们将在下一步中将WebSocket逻辑分离到一个专门的文件中
+# 设置网络接口
 setup_websocket_handler(app)
 
 @app.get("/")

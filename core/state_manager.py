@@ -37,12 +37,11 @@ class StateManager:
             f"(Reason: {reason_for_change})"
         )
 
-        # --- 【核心变更】 ---
-        # 状态更新后，立即发布一个 StateChangedEvent
         await event_bus.publish(
             StateChangedEvent(
                 current_state=self.state,
-                reason=reason_for_change
+                reason=reason_for_change,
+                trigger_event=event  # 【核心变更】将原始事件作为触发源传递出去
             )
         )
 

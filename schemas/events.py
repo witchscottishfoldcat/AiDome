@@ -6,6 +6,8 @@ from datetime import datetime
 from typing import TypeVar
 from uuid import UUID, uuid4
 from .state import PetState
+from typing import Any, Dict
+from typing import Optional
 # --- 1. 事件的抽象基类 ---
 # 这是系统中所有事件的“父类”，定义了它们的共同结构。
 @dataclass(kw_only=True)
@@ -31,3 +33,13 @@ class StateChangedEvent(BaseEvent):
     """当宠物的核心状态发生任何变化时发布。"""
     current_state: PetState
     reason: str
+    # 【核心变更】添加一个可选字段来携带触发源事件
+    trigger_event: Optional[BaseEvent] = None
+    
+# --- 4. 具体的输出/指令事件定义 ---
+# 未来所有由“大脑”内部发出，指令外部模块执行的事件都将定义在此处。
+@dataclass
+class SendWebSocketMessageEvent(BaseEvent):
+    """指令一个IO模块向指定的客户端发送一条WebSocket消息。"""
+    client_id: str
+    payload: Dict[str, Any]
