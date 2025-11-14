@@ -5,7 +5,7 @@ from dataclasses import dataclass, field, KW_ONLY
 from datetime import datetime
 from typing import TypeVar
 from uuid import UUID, uuid4
-
+from .state import PetState
 # --- 1. 事件的抽象基类 ---
 # 这是系统中所有事件的“父类”，定义了它们的共同结构。
 @dataclass(kw_only=True)
@@ -25,3 +25,9 @@ class WebSocketMessageReceivedEvent(BaseEvent):
     """当从WebSocket客户端收到一条消息时触发的事件。"""
     client_id: str
     message_text: str
+
+@dataclass
+class StateChangedEvent(BaseEvent):
+    """当宠物的核心状态发生任何变化时发布。"""
+    current_state: PetState
+    reason: str

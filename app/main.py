@@ -1,14 +1,14 @@
 # app/main.py
-
 import logging
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI
 
-# --- 【核心变更】 ---
-# 导入我们新创建的状态管理器
 from core.state_manager import state_manager
-from schemas.events import WebSocketMessageReceivedEvent
-from .event_bus import event_bus
+from schemas.events import StateChangedEvent
+from schemas.state import PetState
+from app.event_bus import event_bus
+# WebSocket相关的导入暂时保留，因为endpoint还需要
+from app.websocket_handler import setup_websocket_handler 
 
 logging.basicConfig(
     level=logging.INFO,
@@ -16,47 +16,28 @@ logging.basicConfig(
 )
 logger = logging.getLogger("ArkHeart.Brain.Main")
 
-# --- 【变更】 ---
-# 我们不再需要临时的事件处理器，StateManager 将接管这个职责。
-# async def handle_websocket_message(event: WebSocketMessageReceivedEvent):
-#     logger.info(f"[EventHandler] Received message from '{event.client_id}': '{event.message_text}'")
+# --- 【新】临时的状态变化日志记录器 ---
+async def log_state_changes(event: StateChangedEvent):
+    logger.info(
+        f"[State Logger] Pet state changed! New energy: {event.current_state.energy:.2f}. "
+        f"Reason: {event.reason}"
+    )
 
 app = FastAPI(title="ArkHeart Brain Service", version="0.1.0")
 
 @app.on_event("startup")
 async def startup_event():
-    """
-    应用启动时，初始化并连接所有核心模块。
-    """
     logger.info("Application starting up...")
-    
-    # --- 【核心变更】 ---
-    # 激活状态管理器，让它去订阅自己关心的事件。
     await state_manager.setup_subscriptions()
     
-    # 我们之前的临时订阅可以移除了。
-    # await event_bus.subscribe(WebSocketMessageReceivedEvent, handle_websocket_message)
-    # logger.info("Event handlers subscribed.")
+    # --- 【核心变更】 ---
+    # 订阅我们新创建的 StateChangedEvent
+    await event_bus.subscribe(StateChangedEvent, log_state_changes)
+    logger.info("State change logger subscribed.")
 
-@app.websocket("/ws/v1/{client_id}")
-async def websocket_endpoint(websocket: WebSocket, client_id: str):
-    await websocket.accept()
-    logger.info(f"Connection established with client: {client_id}")
-    try:
-        await websocket.send_json({
-            "command_name": "handshake_response",
-            "payload": {"accepted": True, "server_version": app.version}
-        })
-        while True:
-            received_data = await websocket.receive_text()
-            logger.debug(f"Raw data received from {client_id}: {received_data}")
-            await event_bus.publish(
-                WebSocketMessageReceivedEvent(client_id=client_id, message_text=received_data)
-            )
-    except WebSocketDisconnect:
-        logger.warning(f"Client {client_id} has disconnected.")
-    except Exception as e:
-        logger.error(f"An unexpected error occurred with client {client_id}: {e}", exc_info=True)
+# --- 【变更】将WebSocket逻辑移出 ---
+# 我们将在下一步中将WebSocket逻辑分离到一个专门的文件中
+setup_websocket_handler(app)
 
 @app.get("/")
 async def read_root():
