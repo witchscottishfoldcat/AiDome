@@ -4,6 +4,9 @@ import logging
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
+# --- 【核心变更】 ---
+# 导入我们新创建的状态管理器
+from core.state_manager import state_manager
 from schemas.events import WebSocketMessageReceivedEvent
 from .event_bus import event_bus
 
@@ -13,17 +16,27 @@ logging.basicConfig(
 )
 logger = logging.getLogger("ArkHeart.Brain.Main")
 
-# 临时的事件处理器，未来将被移除
-async def handle_websocket_message(event: WebSocketMessageReceivedEvent):
-    logger.info(f"[EventHandler] Received message from '{event.client_id}': '{event.message_text}'")
+# --- 【变更】 ---
+# 我们不再需要临时的事件处理器，StateManager 将接管这个职责。
+# async def handle_websocket_message(event: WebSocketMessageReceivedEvent):
+#     logger.info(f"[EventHandler] Received message from '{event.client_id}': '{event.message_text}'")
 
 app = FastAPI(title="ArkHeart Brain Service", version="0.1.0")
 
 @app.on_event("startup")
 async def startup_event():
+    """
+    应用启动时，初始化并连接所有核心模块。
+    """
     logger.info("Application starting up...")
-    await event_bus.subscribe(WebSocketMessageReceivedEvent, handle_websocket_message)
-    logger.info("Event handlers subscribed.")
+    
+    # --- 【核心变更】 ---
+    # 激活状态管理器，让它去订阅自己关心的事件。
+    await state_manager.setup_subscriptions()
+    
+    # 我们之前的临时订阅可以移除了。
+    # await event_bus.subscribe(WebSocketMessageReceivedEvent, handle_websocket_message)
+    # logger.info("Event handlers subscribed.")
 
 @app.websocket("/ws/v1/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: str):
