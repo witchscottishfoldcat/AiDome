@@ -1,0 +1,30 @@
+[project]
+name = "ark-heart"
+version = "0.1.0"
+description = "An AI desktop companion with a believable soul."
+authors = [
+    {name = "ArkHeart Dev Team",email = "dev@arkheart.ai"}
+]
+license = {text = "Apache-2.0"}
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi (>=0.121.1,<0.122.0)",
+    "uvicorn[standard] (>=0.38.0,<0.39.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+packages = [
+    { include = "app" },
+    { include = "api" },
+    { include = "core" },
+    { include = "services" },
+    { include = "plugins" },
+    { include = "schemas" },
+    { include = "config" },
+]

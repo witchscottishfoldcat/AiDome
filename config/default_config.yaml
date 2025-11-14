@@ -1,0 +1,6 @@
+# in config/default_config.yaml
+services:
+  llm:
+    # provider: "OpenAI"
+    provider: "Anthropic" # <--- 添加或修改此行
+    # ... (Anthropic相关的API Key和其他配置)

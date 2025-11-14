@@ -1,0 +1,22 @@
+{
+  "name": "Realtime Weather Reporter",
+  "version": "1.0.0",
+  "author": "YourName",
+  "description": "一个简单的技能，用于查询指定城市的实时天气。",
+  "entry_point": "skill_code:WeatherSkill",
+  "triggers": [
+    "查询天气",
+    "今天天气怎么样",
+    "看看外面天气"
+  ],
+  "arguments": {
+    "city": {
+      "type": "string",
+      "description": "需要查询的城市名称",
+      "required": false
+    }
+  },
+  "permissions": [
+    "network_access_external"
+  ]
+}
